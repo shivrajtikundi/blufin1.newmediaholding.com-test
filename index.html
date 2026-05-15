@@ -35,6 +35,10 @@
             background: #cbd5e1;
             border-radius: 10px;
         }
+
+        .modal-active {
+            overflow: hidden;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -45,7 +49,6 @@
             <div class="flex justify-between h-20 items-center">
                 <div class="flex items-center gap-2">
                     <div class="w-10 h-10 ocean-gradient rounded-xl flex items-center justify-center text-white">
-                        <i class="fas fa-fish-icons text-xl"></i>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6">
                             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                         </svg>
@@ -225,12 +228,11 @@
                 </div>
             </div>
             <div>
-                <h4 class="text-white font-bold mb-6">Quick Links</h4>
+                <h4 class="text-white font-bold mb-6">Policies</h4>
                 <ul class="space-y-4 text-sm">
-                    <li><a href="#" class="hover:text-white">Shop Seafood</a></li>
-                    <li><a href="#" class="hover:text-white">Our Sourcing</a></li>
-                    <li><a href="#" class="hover:text-white">Delivery Policy</a></li>
-                    <li><a href="#" class="hover:text-white">Recipes Blog</a></li>
+                    <li><button onclick="openPolicy('refund')" class="hover:text-white text-left">Refund Policy</button></li>
+                    <li><button onclick="openPolicy('terms')" class="hover:text-white text-left">Terms of Service</button></li>
+                    <li><button onclick="openPolicy('privacy')" class="hover:text-white text-left">Privacy Policy</button></li>
                 </ul>
             </div>
             <div>
@@ -255,6 +257,22 @@
             &copy; 2026 Bluefin Mart. All rights reserved. Designed for Quality.
         </div>
     </footer>
+
+    <!-- Policy Modal -->
+    <div id="policy-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <div onclick="closePolicy()" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-3xl w-full max-w-2xl max-h-[80vh] overflow-hidden relative shadow-2xl flex flex-col">
+            <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white">
+                <h2 id="modal-title" class="text-2xl font-bold text-slate-900">Policy</h2>
+                <button onclick="closePolicy()" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modal-content" class="p-8 overflow-y-auto text-slate-600 leading-relaxed custom-scrollbar">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>
 
     <!-- Cart Sidebar -->
     <div id="cart-sidebar" class="fixed inset-0 z-[60] invisible overflow-hidden">
@@ -289,6 +307,42 @@
             { id: 7, name: "Sea Bass Steaks", price: 480, category: "Steaks", weight: "500g", img: "https://images.unsplash.com/photo-1485921325833-c519f76c4927?auto=format&fit=crop&q=80&w=400" },
             { id: 8, name: "Calamari Rings", price: 390, category: "Shellfish", weight: "250g", img: "https://images.unsplash.com/photo-1614961908474-0678f8709e5a?auto=format&fit=crop&q=80&w=400" }
         ];
+
+        const policies = {
+            refund: {
+                title: "Refund Policy",
+                content: `
+                    <h3 class="font-bold text-slate-900 mb-2">1. Freshness Guarantee</h3>
+                    <p class="mb-4">Since our products are perishable, we offer a 100% freshness guarantee. If your seafood arrives in poor condition, please notify us within 2 hours of delivery with photographic evidence.</p>
+                    <h3 class="font-bold text-slate-900 mb-2">2. Returns</h3>
+                    <p class="mb-4">We do not accept physical returns of seafood once delivered due to health and safety regulations. However, if an error is made on our part (wrong item, weight discrepancy), we will issue a full refund or replacement.</p>
+                    <h3 class="font-bold text-slate-900 mb-2">3. Refund Process</h3>
+                    <p class="mb-4">Approved refunds will be credited back to your original payment method within 5-7 business days.</p>
+                `
+            },
+            terms: {
+                title: "Terms of Service",
+                content: `
+                    <h3 class="font-bold text-slate-900 mb-2">1. Acceptance of Terms</h3>
+                    <p class="mb-4">By using Bluefin Mart, you agree to comply with all guidelines regarding order placement, delivery protocols, and payment security.</p>
+                    <h3 class="font-bold text-slate-900 mb-2">2. Availability</h3>
+                    <p class="mb-4">Our stock is subject to the "Daily Catch." If an item becomes unavailable after order placement due to weather or ocean conditions, we will contact you for a substitution or refund.</p>
+                    <h3 class="font-bold text-slate-900 mb-2">3. Delivery</h3>
+                    <p class="mb-4">Customers must ensure someone is available to receive the cold-chain package. We are not responsible for spoilage if the package is left unattended for extended periods.</p>
+                `
+            },
+            privacy: {
+                title: "Privacy Policy",
+                content: `
+                    <h3 class="font-bold text-slate-900 mb-2">1. Data Collection</h3>
+                    <p class="mb-4">We collect your name, address, and contact details solely for the purpose of facilitating delivery and providing order updates.</p>
+                    <h3 class="font-bold text-slate-900 mb-2">2. Payment Security</h3>
+                    <p class="mb-4">We do not store credit card details. All transactions are processed through encrypted, industry-standard payment gateways.</p>
+                    <h3 class="font-bold text-slate-900 mb-2">3. Communications</h3>
+                    <p class="mb-4">We may send SMS or Email notifications regarding your specific order status. You may opt-out of promotional marketing at any time.</p>
+                `
+            }
+        };
 
         let cart = [];
 
@@ -329,7 +383,6 @@
             }
             updateUI();
             
-            // Notification toast feel
             const btn = event.currentTarget;
             btn.innerHTML = '<i class="fas fa-check"></i>';
             btn.classList.add('bg-green-500', 'text-white');
@@ -398,6 +451,26 @@
                     sidebar.classList.add('invisible');
                 }, 300);
             }
+        }
+
+        function openPolicy(key) {
+            const modal = document.getElementById('policy-modal');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+            
+            title.innerText = policies[key].title;
+            content.innerHTML = policies[key].content;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.classList.add('modal-active');
+        }
+
+        function closePolicy() {
+            const modal = document.getElementById('policy-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.classList.remove('modal-active');
         }
 
         window.onload = renderProducts;
